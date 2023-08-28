@@ -79,6 +79,40 @@ export type XrefIdResponse = {
   description: string;
 }[];
 
+export type XrefNameRequest = {
+  /**
+   * Symbol or display name of a gene
+   * @example BRCA2
+   */
+  name: string;
+  /**
+   * Species name/alias
+   * @example human
+   */
+  species: string;
+  /**
+   * Restrict the search to a database other than the default. Useful if you need to use a DB other than core
+   */
+  db_type?: string;
+  /**
+   * Filter by external database
+   * @example HGNC
+   */
+  external_db?: string;
+};
+
+export type XrefNameResponse = {
+  description: string;
+  info_text: string;
+  version: string;
+  synonyms: string[];
+  display_id: string;
+  info_type: string;
+  primary_id: string;
+  db_display_name: string;
+  dbname: string;
+};
+
 export class Xref {
   constructor(private client: AxiosInstance, private limiter: Bottleneck) {}
 
@@ -122,6 +156,26 @@ export class Xref {
           species: req.species,
         },
       })
+    );
+    return data;
+  }
+
+  /**
+   * Performs a lookup based upon the primary accession or display label of an external reference and returning the information we hold about the entry
+   *
+   * @link https://rest.ensembl.org/documentation/info/xref_name
+   */
+  public async name(req: XrefNameRequest): Promise<XrefNameResponse> {
+    const { data } = await this.limiter.schedule(() =>
+      this.client.get<XrefNameResponse>(
+        `/xrefs/name/${req.species}/${req.name}`,
+        {
+          params: {
+            db_type: req.db_type,
+            external_db: req.external_db,
+          },
+        }
+      )
     );
     return data;
   }
