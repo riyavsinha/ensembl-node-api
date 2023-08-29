@@ -143,6 +143,39 @@ export type LdPairwiseResponse = {
   r2: string;
 }[];
 
+export type LdForRegionRequest = {
+  /**
+   * Population for which to compute LD. Use the `LdPopulation` enum for valid values.
+   */
+  population_name: LdPopulation;
+  /**
+   * Species name/alias
+   */
+  species: string;
+  /**
+   * Query region. A maximum region size of 500 kb is allowed. If the query region overlaps the MHC region only a maximum region size of 10 kb is allowed.
+   *
+   * @example 6:25837556..25843455
+   */
+  region: string;
+  /**
+   * Measure of LD. If D' is provided only return pairs of variants whose D' value is equal to or greater than the value provided.
+   */
+  d_prime?: number;
+  /**
+   * Measure of LD. If r-squared is provided only return pairs of variants whose r-squared value is equal to or greater than the value provided.
+   */
+  r2?: number;
+};
+
+export type LdForRegionResponse = {
+  population_name: LdPopulation;
+  d_prime: string;
+  variation2: string;
+  variation1: string;
+  r2: string;
+}[];
+
 export class LinkageDisequilibrium {
   constructor(private client: AxiosInstance, private limiter: Bottleneck) {}
 
@@ -185,6 +218,29 @@ export class LinkageDisequilibrium {
             d_prime: req.d_prime,
             r2: req.r2,
             population_name: req.population_name,
+          },
+        }
+      )
+    );
+
+    return data;
+  }
+
+  /**
+   * Computes and returns LD values between all pairs of variants in the defined region.
+   *
+   * @link https://rest.ensembl.org/documentation/info/ld_region_get
+   */
+  public async forRegion(
+    req: LdForRegionRequest
+  ): Promise<LdForRegionResponse> {
+    const { data } = await this.limiter.schedule(() =>
+      this.client.get<LdForVariantResponse>(
+        `/ld/${req.species}/region/${req.region}/${req.population_name}`,
+        {
+          params: {
+            d_prime: req.d_prime,
+            r2: req.r2,
           },
         }
       )
