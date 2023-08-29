@@ -94,7 +94,7 @@ export type LdForVariantRequest = {
   r2?: number;
   /**
    * Window size in kb. The maximum allowed value for the window size is 500 kb. LD is computed for the given variant and all variants that are located within the specified window.
-   * 
+   *
    * @default 500
    */
   window_size?: number;
@@ -108,12 +108,47 @@ export type LdForVariantResponse = {
   r2: string;
 }[];
 
+export type LdPairwiseRequest = {
+  /**
+   * Variant id 1
+   */
+  id1: string;
+  /**
+   * Variant id 2
+   */
+  id2: string;
+  /**
+   * Species name/alias
+   */
+  species: string;
+  /**
+   * Measure of LD. If D' is provided only return pairs of variants whose D' value is equal to or greater than the value provided.
+   */
+  d_prime?: number;
+  /**
+   * Measure of LD. If r-squared is provided only return pairs of variants whose r-squared value is equal to or greater than the value provided.
+   */
+  r2?: number;
+  /**
+   * Only compute LD for this population. Use the `LdPopulation` enum for valid values.
+   */
+  population_name: LdPopulation;
+};
+
+export type LdPairwiseResponse = {
+  population_name: LdPopulation;
+  d_prime: string;
+  variation2: string;
+  variation1: string;
+  r2: string;
+}[];
+
 export class LinkageDisequilibrium {
   constructor(private client: AxiosInstance, private limiter: Bottleneck) {}
 
   /**
    * Computes and returns LD values between the given variant and all other variants in a window centered around the given variant.
-   * 
+   *
    * @link https://rest.ensembl.org/documentation/info/ld_id_get
    */
   public async forVariant(
@@ -128,6 +163,28 @@ export class LinkageDisequilibrium {
             d_prime: req.d_prime,
             r2: req.r2,
             window_size: req.window_size,
+          },
+        }
+      )
+    );
+
+    return data;
+  }
+
+  /**
+   * Computes and returns LD values between the given variants.
+   *
+   * @link https://rest.ensembl.org/documentation/info/ld_pairwise_get
+   */
+  public async pairwise(req: LdPairwiseRequest): Promise<LdPairwiseResponse> {
+    const { data } = await this.limiter.schedule(() =>
+      this.client.get<LdForVariantResponse>(
+        `/ld/${req.species}/pairwise/${req.id1}/${req.id2}`,
+        {
+          params: {
+            d_prime: req.d_prime,
+            r2: req.r2,
+            population_name: req.population_name,
           },
         }
       )
