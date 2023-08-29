@@ -1,5 +1,6 @@
 import { AxiosInstance } from "axios";
 import Bottleneck from "bottleneck";
+import { booleanToInt } from "../utils/utils.js";
 
 export type XrefExternalSymbolRequest = {
   /**
@@ -148,8 +149,7 @@ export class Xref {
     const { data } = await this.limiter.schedule(() =>
       this.client.get<XrefIdResponse>(`/xrefs/id/${req.id}`, {
         params: {
-          all_levels:
-            req.all_levels === undefined ? undefined : +req.all_levels,
+          all_levels: booleanToInt(req.all_levels),
           db_type: req.db_type,
           external_type: req.external_type,
           object_type: req.object_type,
