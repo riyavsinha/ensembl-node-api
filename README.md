@@ -28,14 +28,17 @@ console.log(await client.xref.externalSymbol({
 
 ## Supported Endpoints
 
+- [ ] Archive
+- [ ] Comparative Genomics
 - [x] Cross References
   - [x] ID
   - [x] Name
   - [x] Symbol
-- [ ] Archive
-- [ ] Comparative Genomics
 - [ ] Information
-- [ ] Linkage Disequilibrium
+- [x] Linkage Disequilibrium
+  - [x] For variant
+  - [x] For region
+  - [x] Pairwise
 - [ ] Lookup
 - [ ] Mapping
 - [ ] Ontologies and Taxonomy
