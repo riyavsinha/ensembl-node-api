@@ -1,7 +1,10 @@
 import axios, { AxiosInstance } from "axios";
 import Bottleneck from "bottleneck";
 import { Xref } from "./api/cross-references.js";
-import { LinkageDisequilibrium } from "./api/linkage-disequilibrium.js";
+import {
+  LinkageDisequilibrium,
+} from "./api/linkage-disequilibrium.js";
+import { Lookup } from "./api/lookup.js";
 
 export class EnsemblClient {
   private client: AxiosInstance;
@@ -9,6 +12,7 @@ export class EnsemblClient {
 
   public xref: Xref;
   public ld: LinkageDisequilibrium;
+  public lookup: Lookup;
 
   public constructor(reqsPerSec = 15) {
     this.client = axios.create({
@@ -25,5 +29,6 @@ export class EnsemblClient {
 
     this.xref = new Xref(this.client, this.limiter);
     this.ld = new LinkageDisequilibrium(this.client, this.limiter);
+    this.lookup = new Lookup(this.client, this.limiter);
   }
 }

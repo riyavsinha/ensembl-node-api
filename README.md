@@ -40,6 +40,10 @@ console.log(await client.xref.externalSymbol({
   - [x] For region
   - [x] Pairwise
 - [ ] Lookup
+  - [x] Id
+  - [ ] Ids
+  - [ ] Symbol
+  - [ ] Symbols
 - [ ] Mapping
 - [ ] Ontologies and Taxonomy
 - [ ] Phenotype Annotations
