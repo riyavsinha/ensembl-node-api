@@ -1,6 +1,5 @@
 import { AxiosInstance } from "axios";
 import Bottleneck from "bottleneck";
-import { booleanToInt } from "../utils/utils.js";
 
 export enum LdPopulation {
   /** African Caribbean in Barbados */
@@ -65,6 +64,9 @@ export enum LdPopulation {
   GGVP_GWJ = "GGVP:GWJ",
 }
 
+/**
+ * The `attribs` parameter is intentionally not included in the `LdForVariantRequest` type. To use it, please use either the  `forVariantWithAttribs` to set it to true, or `forVariant` for false.
+ */
 export type LdForVariantRequest = {
   /**
    * Variant id
@@ -78,12 +80,6 @@ export type LdForVariantRequest = {
    * Species name/alias
    */
   species: string;
-  /**
-   * Whether to add variation attributes for the variation which is used to compute LD data with the input variation: chr, start, end, strand, consequence_type, clinical_significance
-   *
-   * @default false
-   */
-  attribs?: boolean;
   /**
    * Measure of LD. If D' is provided only return pairs of variants whose D' value is equal to or greater than the value provided.
    */
@@ -100,13 +96,30 @@ export type LdForVariantRequest = {
   window_size?: number;
 };
 
-export type LdForVariantResponse = {
+export type EnsemblLd = {
   population_name: LdPopulation;
   d_prime: string;
   variation2: string;
   variation1: string;
   r2: string;
-}[];
+};
+
+export type EnsemblLdWithAttribs = {
+  population_name: LdPopulation;
+  d_prime: string;
+  variation: string;
+  r2: string;
+  consequence_type: string;
+  chr: number;
+  start: number;
+  end: number;
+  strand: number;
+  clinical_significance: string[];
+};
+
+export type LdForVariantResponse = EnsemblLd[];
+
+export type LdForVariantWithAttribsResponse = EnsemblLdWithAttribs[];
 
 export type LdPairwiseRequest = {
   /**
@@ -135,13 +148,7 @@ export type LdPairwiseRequest = {
   population_name: LdPopulation;
 };
 
-export type LdPairwiseResponse = {
-  population_name: LdPopulation;
-  d_prime: string;
-  variation2: string;
-  variation1: string;
-  r2: string;
-}[];
+export type LdPairwiseResponse = EnsemblLd[];
 
 export type LdForRegionRequest = {
   /**
@@ -168,13 +175,7 @@ export type LdForRegionRequest = {
   r2?: number;
 };
 
-export type LdForRegionResponse = {
-  population_name: LdPopulation;
-  d_prime: string;
-  variation2: string;
-  variation1: string;
-  r2: string;
-}[];
+export type LdForRegionResponse = EnsemblLd[];
 
 export class LinkageDisequilibrium {
   constructor(private client: AxiosInstance, private limiter: Bottleneck) {}
@@ -192,7 +193,34 @@ export class LinkageDisequilibrium {
         `/ld/${req.species}/${req.id}/${req.population_name}`,
         {
           params: {
-            attribs: booleanToInt(req.attribs),
+            attribs: 0,
+            d_prime: req.d_prime,
+            r2: req.r2,
+            window_size: req.window_size,
+          },
+        }
+      )
+    );
+
+    return data;
+  }
+
+  /**
+   * Computes and returns LD values between the given variant and all other variants in a window centered around the given variant.
+   *
+   * Adds variation attributes for the variation which is used to compute LD data with the input variation: chr, start, end, strand, consequence_type, clinical_significance
+   *
+   * @link https://rest.ensembl.org/documentation/info/ld_id_get
+   */
+  public async forVariantWithAttribs(
+    req: LdForVariantRequest
+  ): Promise<LdForVariantWithAttribsResponse> {
+    const { data } = await this.limiter.schedule(() =>
+      this.client.get<LdForVariantWithAttribsResponse>(
+        `/ld/${req.species}/${req.id}/${req.population_name}`,
+        {
+          params: {
+            attribs: 1,
             d_prime: req.d_prime,
             r2: req.r2,
             window_size: req.window_size,
